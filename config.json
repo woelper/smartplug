@@ -1,0 +1,8 @@
+{
+    "config" : {
+        "label_must_contain": [""],
+        "filetypes": [".tga"]
+
+    }
+
+}
