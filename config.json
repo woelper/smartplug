@@ -1,8 +1,10 @@
 {
     "config" : {
         "label_must_contain": [""],
-        "filetypes": [".tga"]
-
+        "filetypes": [".tga"],
+        "run_per_drive": ["dir {DRIVE}"],
+        "run_per_file": []
+        
     }
 
 }
