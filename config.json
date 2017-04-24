@@ -1,10 +1,12 @@
 {
-    "config" : {
-        "label_must_contain": [""],
-        "filetypes": [".tga"],
-        "run_per_drive": ["dir {DRIVE}"],
-        "run_per_file": []
-        
-    }
+    "jobs": [
+        {
+            "description": "test",
+            "drive_name_filters": [],
+            "file_ext_filters": [".tga"],
+            "per_drive": false,
+            "command": "dir {PATH}"
+        }
+    ]
 
 }
