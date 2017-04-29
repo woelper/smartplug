@@ -5,7 +5,8 @@
             "drive_name_filters": [],
             "file_ext_filters": [".tga"],
             "per_drive": false,
-            "command": "echo {PATH}"
+            "command": "echo {PATH}",
+            "platform_filters": []
         }
     ]
 }
