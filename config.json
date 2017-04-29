@@ -1,12 +1,32 @@
 {
     "jobs": [
         {
-            "description": "test",
+            "description": "my test job",
             "drive_name_filters": [],
+            "drive_id_filters": [],
             "file_ext_filters": [".tga"],
             "per_drive": false,
             "command": "echo {PATH}",
             "platform_filters": []
+        },
+        {
+            "description": "run on this ID only",
+            "drive_name_filters": [],
+            "drive_id_filters": ["10E5F617"],
+            "file_ext_filters": [".mov"],
+            "per_drive": false,
+            "command": "ffmpeg -i {PATH} -y {PATH}.mp4",
+            "platform_filters": []
+        },
+        {
+            "description": "md5 files",
+            "drive_name_filters": [],
+            "drive_id_filters": [],
+            "file_ext_filters": [],
+            "per_drive": false,
+            "command": "echo {PATH} {MD5}",
+            "platform_filters": []
         }
     ]
+    
 }

@@ -6,11 +6,19 @@ import json
 import logging
 import time
 import plistlib
+import hashlib
 
 LOG_FILENAME = 'index.log'
 # logging.basicConfig(filename=LOG_FILENAME, level=logging.DEBUG)
 logging.basicConfig(level=logging.INFO)
 logging.info('Startup')
+
+def hash_file(path, method):
+    h = hashlib.md5()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(4096), b""):
+            h.update(chunk)
+    return h.hexdigest()
 
 def list_drives():
     """
@@ -42,7 +50,7 @@ def list_drives():
         # gather disk info with diskutil
         cmd = ['diskutil', 'list', '-plist']
         result = subprocess.check_output(cmd)
-        
+
         disks = plistlib.readPlistFromString(result)
         for disk in disks['AllDisks']:
             infocmd = ['diskutil', 'info', '-plist', disk]
@@ -60,33 +68,32 @@ def list_drives():
                 drives.append(d)
         return drives
 
-            
-            
-        #diskutil info -plist <disk>
-        
-        # for disk in plist['AllDisksAndPartitions']:
-        #     for key, value in disk.iteritems():
-        #         print key, '\t', value
-    
-
+    # if all fails, return an empty list
     return []
 
+
 class Drive(object):
+    """
+    The drive class, holding all info necessary for
+    a drive.
+    """
     def __init__(self):
         self.root = None
         self.label = None
         self.id = None
         self.files = []
         self.timestamp = time.time()
-        # self.index()
 
-    def __repr__(self):  
+    def __repr__(self):
         output = '\n{} class\n'.format(self.__class__.__name__)
         for k, v in self.__dict__.iteritems():
             output += '\t{}: {}\n'.format(k, v)
         return output
 
     def index(self):
+        """
+        Gather all files for the drive's mountpoint
+        """
         if self.root is None:
             logging.error('Can not index, no root for drive')
             return
@@ -96,23 +103,23 @@ class Drive(object):
                 self.files.append(os.path.join(root, f))
 
 
-# class Job(object):
-
 
 class JobRunner():
     def __init__(self):
         self.conf_path = 'config.json'
+        # how often to poll for new drives
         self.interval = 5
         self.drives = []
+        # the time in seconds until a drive is considered old and jobs
+        # will be re-run
+        self.time_threshold = 600
 
-        self.time_threshold = 40
 
         # load config file
         with open(self.conf_path) as conffile:
             self.config = json.load(conffile)
 
         self.daemon()
-        # self.run()
 
     def daemon(self):
         while True:
@@ -125,6 +132,9 @@ class JobRunner():
                     logging.info('Drive change: Media ' + drive.label + ' added')
                     drives_to_process.append(drive)
                     self.drives.append(drive)
+                else:
+                    logging.info('Drive already known: ' + drive.label + ' ' + drive.id)
+                    
 
             for drive in self.drives:
                 timedelta = time.time() - drive.timestamp
@@ -139,7 +149,7 @@ class JobRunner():
 
             # run jobs
             self.run(drives_to_process)
-                
+
 
     def run_cmd(self, cmd):
         #TODO catch stderr and log errors
@@ -153,6 +163,7 @@ class JobRunner():
             logging.info('Running job(s) on ' + drive.label)
             # print d
             for job in self.config['jobs']:
+                logging.info('Running job ' + '"' + job['description'] + '"')
                 # make filters case insensitive
                 drive_filters = [n.lower() for n in job['drive_name_filters']]
                 # same for labels
@@ -160,18 +171,32 @@ class JobRunner():
                 if drive_filters:
                     if not any(f in drive_label for f in drive_filters):
                         logging.info('Drive rejected by name filters: {} {}'.format(drive_label, drive_filters))
-                        return
+                        continue
+
+                if job['drive_id_filters']:
+                    if not drive.id in job['drive_id_filters']:
+                        logging.info('Drive id filters specified, but id not in filter')
+                        print drive.id, 'in', job['drive_id_filters']
+                        continue
 
                 if job['per_drive']:
                     logging.error('Not implemented')
-                    return
+                    continue
 
                 for filename in drive.files:
-                    if os.path.splitext(filename)[1].lower() in [fn.lower() for fn in job['file_ext_filters']]:
+                    if job['file_ext_filters']:
+                        if not os.path.splitext(filename)[1].lower() in [fn.lower() for fn in job['file_ext_filters']]:
+                            continue
 
-                        # run job's command on file
-                        cmd = job['command'].replace('{PATH}', filename)
-                        print self.run_cmd(cmd)
+                    # run job's command on file
+                    # replace keywords
+                    cmd = job['command'].replace('{PATH}', filename)
+                    cmd = cmd.replace('{ID}', drive.id)
+                    cmd = cmd.replace('{ROOT}', drive.root)
+                    if '{MD5}' in cmd:
+                        cmd = cmd.replace('{MD5}', hash_file(filename, 'md5'))
+
+                    print self.run_cmd(cmd)
 
 
 i = JobRunner()
