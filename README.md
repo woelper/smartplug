@@ -1,4 +1,4 @@
-# indexusbstorage
+# Smartplug
 
 Do stuff when a removable storage medium is inserted.
 
@@ -11,3 +11,15 @@ Some possible use cases:
 - Create proxy video files for every mov on the medium
 - Backup all txt files on HOMEWORK medium to dropbox
 
+Features:
+
+- Designed to be cross-platform (Windows, MacOS, Linux)
+- Flexible configuration format: Filter drives by ID, label and run any command line action on it or specific files
+- Cooldown: Prevents running an action multiple times in a configurable time period
+- Detects hotplugging of drives (add/remove drives at any time)
+
+Roadmap:
+
+- Add Gui support (web based)
+- Add more fault tolerance (feedback welcome)
+- Add binary releases for Windows / App bundle for MacOS
