@@ -1,4 +1,4 @@
-c# Smartplug
+# Smartplug
 
 Do stuff when a removable storage medium is inserted.
 
