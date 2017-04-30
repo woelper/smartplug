@@ -1,4 +1,4 @@
-# Smartplug
+c# Smartplug
 
 Do stuff when a removable storage medium is inserted.
 
@@ -23,3 +23,6 @@ Roadmap:
 - Add Gui support (web based)
 - Add more fault tolerance (feedback welcome)
 - Add binary releases for Windows / App bundle for MacOS
+
+If you like this, have urgent feature requests or use it commercially, please consider becoming a patreon:
+https://www.patreon.com/woelper
