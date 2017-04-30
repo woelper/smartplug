@@ -1,12 +1,13 @@
 import os
-import sys
 import platform
 import subprocess
+from subprocess import Popen, PIPE
 import json
 import logging
 import time
 import plistlib
 import hashlib
+import re
 
 LOG_FILENAME = 'index.log'
 # logging.basicConfig(filename=LOG_FILENAME, level=logging.DEBUG)
@@ -44,7 +45,7 @@ def list_drives():
             return drives
         else:
             return []
-
+    # MACOS
     if platform.system() == 'Darwin':
         logging.debug('MacOS detected')
         # gather disk info with diskutil
@@ -68,6 +69,21 @@ def list_drives():
                 drives.append(d)
         return drives
 
+
+    if platform.system() == 'Linux':
+        logging.warning('Linux is not implemented yet')
+        partitionsFile = open("/proc/partitions")
+        lines = partitionsFile.readlines()[2:]#Skips the header lines
+        for line in lines:
+            words = [x.strip() for x in line.split()]
+            minorNumber = int(words[1])
+            deviceName = words[3]
+            if minorNumber % 16 == 0:
+                path = "/sys/class/block/" + deviceName
+                if os.path.islink(path):
+                    if os.path.realpath(path).find("/usb") > 0:
+                        print "/dev/%s" % deviceName
+
     # if all fails, return an empty list
     return []
 
@@ -81,6 +97,8 @@ class Drive(object):
         self.root = None
         self.label = None
         self.id = None
+        self.capacity = None
+        self.available_space = None
         self.files = []
         self.timestamp = time.time()
 
@@ -134,7 +152,7 @@ class JobRunner():
                     self.drives.append(drive)
                 else:
                     logging.info('Drive already known: ' + drive.label + ' ' + drive.id)
-                    
+
 
             for drive in self.drives:
                 timedelta = time.time() - drive.timestamp
@@ -152,9 +170,19 @@ class JobRunner():
 
 
     def run_cmd(self, cmd):
+        """
+        Executes a command
+        """
+
+        p = Popen(cmd, stdout=PIPE, stderr=PIPE)
+        stdout, stderr = p.communicate()
+
         #TODO catch stderr and log errors
-        res = subprocess.check_output(cmd, shell=True)
-        return res.rstrip()
+        # res = subprocess.check_output(cmd, shell=True)
+        print stderr
+        if stderr:
+            logging.error(stderr)
+        return stdout.rstrip()
 
     def run(self, drives):
 
@@ -199,4 +227,10 @@ class JobRunner():
                     print self.run_cmd(cmd)
 
 
-i = JobRunner()
+
+def main():
+    i = JobRunner()
+
+
+if __name__ == '__main__':
+    main()
