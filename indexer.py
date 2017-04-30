@@ -132,10 +132,15 @@ class JobRunner():
         # will be re-run
         self.time_threshold = 600
 
-
         # load config file
         with open(self.conf_path) as conffile:
             self.config = json.load(conffile)
+
+        try:
+            self.interval = int(self.config['options']['check_interval'])
+            self.time_threshold = int(self.config['options']['rerun_drive_after'])
+        except:
+            print 'could not parse options'
 
         self.daemon()
 
@@ -161,9 +166,12 @@ class JobRunner():
                     print 'too old:', drive.label
                     # reset
                     drive.timestamp = time.time()
+                else:
+                    logging.info('Not touching {} before now + {} secs'.format(drive.label, int(self.time_threshold - timedelta)))
+                    
 
 
-            print 'Process:', drives_to_process
+            # print 'Process:', drives_to_process
 
             # run jobs
             self.run(drives_to_process)
@@ -173,13 +181,14 @@ class JobRunner():
         """
         Executes a command
         """
+        try:
+            p = Popen(cmd, stdout=PIPE, stderr=PIPE, shell=True)
+        except Exception as err:
+            logging.error(str(err))
+            return '{} caused err: {}'.format(cmd, err)
 
-        p = Popen(cmd, stdout=PIPE, stderr=PIPE)
         stdout, stderr = p.communicate()
 
-        #TODO catch stderr and log errors
-        # res = subprocess.check_output(cmd, shell=True)
-        print stderr
         if stderr:
             logging.error(stderr)
         return stdout.rstrip()
@@ -218,13 +227,14 @@ class JobRunner():
 
                     # run job's command on file
                     # replace keywords
-                    cmd = job['command'].replace('{PATH}', filename)
-                    cmd = cmd.replace('{ID}', drive.id)
-                    cmd = cmd.replace('{ROOT}', drive.root)
-                    if '{MD5}' in cmd:
-                        cmd = cmd.replace('{MD5}', hash_file(filename, 'md5'))
+                    for cmd in job['commands']:
+                        cmd = cmd.replace('{PATH}', filename)
+                        cmd = cmd.replace('{ID}', drive.id)
+                        cmd = cmd.replace('{ROOT}', drive.root)
+                        if '{MD5}' in cmd:
+                            cmd = cmd.replace('{MD5}', hash_file(filename, 'md5'))
 
-                    print self.run_cmd(cmd)
+                        print self.run_cmd(cmd)
 
 
 

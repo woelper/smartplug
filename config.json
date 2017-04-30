@@ -6,7 +6,7 @@
             "drive_id_filters": [],
             "file_ext_filters": [".tga"],
             "per_drive": false,
-            "command": "echo {PATH}",
+            "commands": ["echo {PATH}"],
             "platform_filters": []
         },
         {
@@ -15,7 +15,7 @@
             "drive_id_filters": ["10E5F617"],
             "file_ext_filters": [".mov"],
             "per_drive": false,
-            "command": "ffmpeg -i {PATH} -y {PATH}.mp4",
+            "commands": ["ffmpeg -i {PATH} -y {PATH}.mp4"],
             "platform_filters": []
         },
         {
@@ -24,9 +24,12 @@
             "drive_id_filters": [],
             "file_ext_filters": [],
             "per_drive": false,
-            "command": "echo {PATH} {MD5}",
+            "commands": ["echo {PATH} {MD5}"],
             "platform_filters": []
         }
-    ]
-    
+    ],
+    "options" : {
+        "rerun_drive_after": 600,
+        "check_interval": 5
+    }
 }
