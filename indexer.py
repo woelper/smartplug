@@ -190,7 +190,7 @@ class JobRunner():
         stdout, stderr = p.communicate()
 
         if stderr:
-            logging.error(stderr)
+            logging.error('{}\nJob: {}'.format(stderr.rstrip(), cmd))
         return stdout.rstrip()
 
     def run(self, drives):
@@ -200,6 +200,9 @@ class JobRunner():
             logging.info('Running job(s) on ' + drive.label)
             # print d
             for job in self.config['jobs']:
+
+                results = []
+                
                 logging.info('Running job ' + '"' + job['description'] + '"')
                 # make filters case insensitive
                 drive_filters = [n.lower() for n in job['drive_name_filters']]
@@ -220,6 +223,7 @@ class JobRunner():
                     logging.error('Not implemented')
                     continue
 
+
                 for filename in drive.files:
                     if job['file_ext_filters']:
                         if not os.path.splitext(filename)[1].lower() in [fn.lower() for fn in job['file_ext_filters']]:
@@ -232,6 +236,7 @@ class JobRunner():
                         ('{ROOT}', drive.root),
                         ('{MD5}', lambda: hash_file(filename, 'md5')),
                     ]
+
 
                     # run each job's command
                     for cmd in job['commands']:
@@ -246,7 +251,15 @@ class JobRunner():
                                 else:
                                     cmd = cmd.replace(key, value)
 
-                        print self.run_cmd(cmd)
+
+                        result = self.run_cmd(cmd)
+                        results.append(result)
+                        print result
+
+                if 'log' in job:
+                    logfile = job['log']
+                    with open(logfile, 'wb') as f:
+                        f.write('\n'.join(results))
 
 
 

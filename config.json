@@ -25,7 +25,8 @@
             "file_ext_filters": [],
             "per_drive": false,
             "commands": ["echo {PATH} {MD5}"],
-            "platform_filters": []
+            "platform_filters": [],
+            "log": "md5.log"
         },
         {
             "description": "failing job",
