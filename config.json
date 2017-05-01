@@ -26,6 +26,15 @@
             "per_drive": false,
             "commands": ["echo {PATH} {MD5}"],
             "platform_filters": []
+        },
+        {
+            "description": "failing job",
+            "drive_name_filters": [],
+            "drive_id_filters": [],
+            "file_ext_filters": [".tga"],
+            "per_drive": false,
+            "commands": ["fail fail {PATH}"],
+            "platform_filters": []
         }
     ],
     "options" : {

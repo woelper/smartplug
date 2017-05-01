@@ -7,7 +7,6 @@ import logging
 import time
 import plistlib
 import hashlib
-import re
 
 LOG_FILENAME = 'index.log'
 # logging.basicConfig(filename=LOG_FILENAME, level=logging.DEBUG)
@@ -15,6 +14,7 @@ logging.basicConfig(level=logging.INFO)
 logging.info('Startup')
 
 def hash_file(path, method):
+    # logging.info('-- hashing')
     h = hashlib.md5()
     with open(path, "rb") as f:
         for chunk in iter(lambda: f.read(4096), b""):
@@ -225,14 +225,26 @@ class JobRunner():
                         if not os.path.splitext(filename)[1].lower() in [fn.lower() for fn in job['file_ext_filters']]:
                             continue
 
-                    # run job's command on file
-                    # replace keywords
+
+                    mappings = [
+                        ('{PATH}', filename),
+                        ('{ID}', drive.id),
+                        ('{ROOT}', drive.root),
+                        ('{MD5}', lambda: hash_file(filename, 'md5')),
+                    ]
+
+                    # run each job's command
                     for cmd in job['commands']:
-                        cmd = cmd.replace('{PATH}', filename)
-                        cmd = cmd.replace('{ID}', drive.id)
-                        cmd = cmd.replace('{ROOT}', drive.root)
-                        if '{MD5}' in cmd:
-                            cmd = cmd.replace('{MD5}', hash_file(filename, 'md5'))
+                        # replace keywords
+                        for mapping in mappings:
+                            key = mapping[0]
+                            value = mapping[1]
+
+                            if key in cmd:
+                                if callable(value):
+                                    cmd = cmd.replace(key, value())
+                                else:
+                                    cmd = cmd.replace(key, value)
 
                         print self.run_cmd(cmd)
 
